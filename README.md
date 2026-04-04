@@ -33,6 +33,27 @@ This project implements a highly available web service on Kubernetes using AWS E
 - [ ] Observability
 - [ ] Stress test
 
+## Incremental Terraform Validation
+
+The Terraform project was validated incrementally by creating the root module first and then adding functional stubs for the `network` and `eks` modules.
+
+This approach made it possible to validate the project structure early, ensuring that module inputs and references were aligned before implementing the actual AWS resources.
+
+## Network Module
+
+The `network` module provisions the foundational AWS networking resources required by the project.
+
+Implemented resources include:
+
+- a dedicated VPC
+- two public subnets across two Availability Zones
+- two private subnets across two Availability Zones
+- an Internet Gateway
+- a single NAT Gateway for outbound internet access from private subnets
+- public and private route tables with the appropriate associations
+
+The public subnets are intended for internet-facing components such as the ingress load balancer, while the private subnets are reserved for the EKS worker nodes. This separation improves the security posture of the environment while keeping the architecture aligned with common AWS networking practices.
+
 ## Decisions (WIP)
 (To be expanded)
 
