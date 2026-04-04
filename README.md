@@ -72,6 +72,38 @@ Implemented resources include:
 
 The cluster was configured to use private subnets for the worker nodes and both private and restricted public API access for cluster administration. This provides a balance between operational simplicity and improved security for the challenge environment.
 
+## Ingress Controller
+
+An NGINX Ingress Controller was deployed to the cluster using Helm.
+
+The controller was exposed using a Kubernetes Service of type `LoadBalancer`, which automatically provisioned an AWS Network Load Balancer (NLB).
+
+This component is responsible for routing external HTTP/HTTPS traffic into the cluster and will be used to expose the application in the next steps.
+
+The decision to use NGINX Ingress aligns with the challenge requirements and provides a flexible and widely adopted solution for managing traffic routing in Kubernetes environments.
+
+### Tooling
+
+The following tools are required to interact with the Kubernetes cluster:
+
+- kubectl
+- Helm
+
+Helm is used to install and manage Kubernetes packages such as the NGINX Ingress Controller and monitoring stack.
+
+## Ingress Controller Deployment
+
+The NGINX Ingress Controller is deployed using Helm through an automation script instead of manual ad-hoc commands.
+
+This approach improves repeatability and makes the lab environment easier to destroy and recreate, which is especially useful for cost control and for demonstrating the setup during the recorded walkthrough.
+
+The deployment uses:
+
+- Helm repository configuration
+- namespace creation if needed
+- `helm upgrade --install` for idempotent installation
+- a `LoadBalancer` service to expose the ingress controller externally
+
 ## Decisions (WIP)
 (To be expanded)
 
