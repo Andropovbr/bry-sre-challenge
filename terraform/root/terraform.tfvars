@@ -18,7 +18,7 @@ max_size            = 3
 
 endpoint_private_access = true
 endpoint_public_access  = true
-public_access_cidrs     = ["SEU_IP_PUBLICO/32"]
+public_access_cidrs     = ["189.46.207.139/32"]
 
 tags = {
   Project = "bry-sre-challenge"
