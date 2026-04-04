@@ -54,6 +54,24 @@ Implemented resources include:
 
 The public subnets are intended for internet-facing components such as the ingress load balancer, while the private subnets are reserved for the EKS worker nodes. This separation improves the security posture of the environment while keeping the architecture aligned with common AWS networking practices.
 
+## EKS Module
+
+The `eks` module provisions the Kubernetes control plane and worker nodes for the project.
+
+Implemented resources include:
+
+- an Amazon EKS cluster
+- a managed node group
+- IAM roles for the control plane and worker nodes
+- IAM policy attachments required for EKS operation
+- an OpenID Connect (OIDC) provider for future IAM Roles for Service Accounts (IRSA) integrations
+- core EKS-managed add-ons:
+  - VPC CNI
+  - CoreDNS
+  - kube-proxy
+
+The cluster was configured to use private subnets for the worker nodes and both private and restricted public API access for cluster administration. This provides a balance between operational simplicity and improved security for the challenge environment.
+
 ## Decisions (WIP)
 (To be expanded)
 
