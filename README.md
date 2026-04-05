@@ -270,6 +270,26 @@ At this stage, the focus is on:
 
 More advanced features such as centralized logs and distributed tracing were intentionally left out to avoid overengineering.
 
+## Ingress metrics
+
+To support traffic analysis during stress tests, the NGINX Ingress Controller exposes Prometheus metrics.
+
+### What is monitored
+- request rate
+- request latency
+- HTTP status codes
+- ingress controller behavior under load
+
+### Why this matters
+Ingress metrics provide the most direct view of how external traffic affects the application and the Kubernetes entrypoint during load tests.
+
+### Implementation
+The ingress-nginx Helm deployment enables:
+- Prometheus metrics
+- ServiceMonitor integration for Prometheus Operator
+
+This allows the observability stack to scrape ingress metrics automatically and visualize them in Grafana.
+
 ## Decisions (WIP)
 (To be expanded)
 

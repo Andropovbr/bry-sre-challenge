@@ -114,6 +114,13 @@ fi
 run_step "cert-manager" "Deploying cert-manager..." "${SKIP_CERT_MANAGER}" \
   "${SCRIPT_DIR}/deploy-cert-manager.sh"
 
+if [[ "${SKIP_CERT_MANAGER}" != "true" ]]; then
+  if ! kubectl get clusterissuer letsencrypt-prod >/dev/null 2>&1; then
+    echo "ERROR: ClusterIssuer letsencrypt-prod was not created"
+    exit 1
+  fi
+fi
+
 run_step "app" "Deploying sample application..." "${SKIP_APP}" \
   "${SCRIPT_DIR}/deploy-app.sh"
 

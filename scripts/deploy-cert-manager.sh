@@ -8,6 +8,8 @@ NAMESPACE="cert-manager"
 RELEASE_NAME="cert-manager"
 REPO_NAME="jetstack"
 REPO_URL="https://charts.jetstack.io"
+CLUSTER_ISSUER_FILE="k8s/cert-manager/cluster-issuer.yaml"
+CLUSTER_ISSUER_NAME="letsencrypt-prod"
 
 echo "Checking EKS cluster status..."
 CLUSTER_STATUS="$(aws eks describe-cluster \
@@ -29,6 +31,11 @@ aws eks update-kubeconfig \
 echo "Validating cluster connectivity..."
 kubectl cluster-info >/dev/null
 
+if [[ ! -f "${CLUSTER_ISSUER_FILE}" ]]; then
+  echo "ERROR: ClusterIssuer manifest not found: ${CLUSTER_ISSUER_FILE}"
+  exit 1
+fi
+
 echo "Adding Helm repository..."
 helm repo add "${REPO_NAME}" "${REPO_URL}" >/dev/null 2>&1 || true
 
@@ -48,5 +55,12 @@ kubectl rollout status deployment/cert-manager -n "${NAMESPACE}" --timeout=300s
 kubectl rollout status deployment/cert-manager-webhook -n "${NAMESPACE}" --timeout=300s
 kubectl rollout status deployment/cert-manager-cainjector -n "${NAMESPACE}" --timeout=300s
 
-echo "cert-manager deployed successfully."
+echo "Applying ClusterIssuer..."
+kubectl apply -f "${CLUSTER_ISSUER_FILE}"
+
+echo "Validating ClusterIssuer..."
+kubectl get clusterissuer "${CLUSTER_ISSUER_NAME}" >/dev/null
+
+echo "cert-manager and ClusterIssuer deployed successfully."
 kubectl get pods -n "${NAMESPACE}"
+kubectl get clusterissuer
