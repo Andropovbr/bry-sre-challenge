@@ -104,6 +104,19 @@ The deployment uses:
 - `helm upgrade --install` for idempotent installation
 - a `LoadBalancer` service to expose the ingress controller externally
 
+## Automated Cluster Context Refresh
+
+Because the lab environment may be destroyed and recreated for cost control, the ingress deployment script was designed to refresh the local kubeconfig automatically before interacting with the cluster.
+
+This avoids failures caused by stale EKS API endpoints from previously destroyed environments and makes the deployment workflow more repeatable.
+
+The script performs the following steps before installing the ingress controller:
+
+- checks whether the EKS cluster exists and is in `ACTIVE` state
+- updates the local kubeconfig with the current cluster endpoint
+- validates Kubernetes API connectivity
+- installs or upgrades the ingress controller with Helm
+
 ## Decisions (WIP)
 (To be expanded)
 
