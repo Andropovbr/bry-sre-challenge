@@ -311,6 +311,25 @@ For that reason, the ingress-nginx Helm values add the same label to the generat
 
 Without this label, the metrics endpoint exists but Prometheus does not scrape it.
 
+## Load testing and observability validation
+
+After setting up Prometheus and Grafana, load tests were executed using k6 to validate the observability pipeline.
+
+### Goals
+
+- verify that ingress metrics are correctly collected
+- analyze request throughput and latency
+- validate system stability under load
+
+### Results
+
+- request rate increased as expected
+- no HTTP 5xx errors observed
+- ingress metrics successfully scraped by Prometheus
+- latency metrics available for analysis
+
+This confirms that the observability stack is working end-to-end.
+
 ## Decisions (WIP)
 (To be expanded)
 
