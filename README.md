@@ -120,6 +120,34 @@ Non-interactive mode for Grafana credentials:
 
 This orchestration layer improves reproducibility, reduces manual errors during environment recreation, and makes the overall setup easier to demonstrate and document.
 
+## Bootstrap orchestration
+
+The bootstrap script supports resumable execution to make environment recreation easier.
+
+### Examples
+
+Run the full sequence:
+
+    ./scripts/bootstrap-eks-addons.sh
+
+Resume from a specific step:
+
+    START_FROM=route53-app ./scripts/bootstrap-eks-addons.sh
+
+Skip a step explicitly:
+
+    SKIP_GRAFANA_SECRET=true ./scripts/bootstrap-eks-addons.sh
+
+This reduces manual repetition and makes the setup more resilient when a single step fails.
+
+## Load balancer behavior on EKS
+
+The `ingress-nginx` controller is exposed through a Kubernetes `Service` of type `LoadBalancer`.
+
+In this setup, because the AWS Load Balancer Controller is not installed, Amazon EKS falls back to the legacy AWS cloud provider behavior, which provisions a Classic Load Balancer by default.
+
+A possible future improvement would be migrating to the AWS Load Balancer Controller to provision ALB or NLB resources using the recommended AWS-native approach.
+
 ## Automated Cluster Context Refresh
 
 Because the lab environment may be destroyed and recreated for cost control, the ingress deployment script was designed to refresh the local kubeconfig automatically before interacting with the cluster.

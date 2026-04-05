@@ -8,8 +8,17 @@ INGRESS_NAMESPACE="${INGRESS_NAMESPACE:-ingress-nginx}"
 INGRESS_SERVICE_NAME="${INGRESS_SERVICE_NAME:-ingress-nginx-controller}"
 WAIT_TIMEOUT_SECONDS="${WAIT_TIMEOUT_SECONDS:-600}"
 WAIT_INTERVAL_SECONDS="${WAIT_INTERVAL_SECONDS:-10}"
+START_FROM="${START_FROM:-}"
+SKIP_INGRESS="${SKIP_INGRESS:-false}"
+SKIP_CERT_MANAGER="${SKIP_CERT_MANAGER:-false}"
+SKIP_APP="${SKIP_APP:-false}"
+SKIP_ROUTE53_APP="${SKIP_ROUTE53_APP:-false}"
+SKIP_GRAFANA_SECRET="${SKIP_GRAFANA_SECRET:-false}"
+SKIP_OBSERVABILITY="${SKIP_OBSERVABILITY:-false}"
+SKIP_ROUTE53_GRAFANA="${SKIP_ROUTE53_GRAFANA:-false}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STARTED="false"
 
 log() {
   echo
@@ -22,6 +31,25 @@ require_command() {
     echo "ERROR: Required command not found: ${cmd}"
     exit 1
   fi
+}
+
+should_run_step() {
+  local step_name="$1"
+
+  if [[ -z "${START_FROM}" ]]; then
+    return 0
+  fi
+
+  if [[ "${STARTED}" == "true" ]]; then
+    return 0
+  fi
+
+  if [[ "${START_FROM}" == "${step_name}" ]]; then
+    STARTED="true"
+    return 0
+  fi
+
+  return 1
 }
 
 wait_for_ingress_lb() {
@@ -48,33 +76,58 @@ wait_for_ingress_lb() {
   exit 1
 }
 
+run_step() {
+  local step_name="$1"
+  local step_description="$2"
+  local skip_flag="$3"
+  shift 3
+
+  if [[ "${skip_flag}" == "true" ]]; then
+    echo "Skipping step: ${step_name}"
+    return 0
+  fi
+
+  if should_run_step "${step_name}"; then
+    log "${step_description}"
+    "$@"
+  else
+    echo "Skipping step before START_FROM: ${step_name}"
+  fi
+}
+
 log "Validating prerequisites..."
 require_command kubectl
 require_command helm
 require_command aws
 
-log "Deploying ingress-nginx..."
-"${SCRIPT_DIR}/deploy-ingress-nginx.sh"
+run_step "ingress" "Deploying ingress-nginx..." "${SKIP_INGRESS}" \
+  "${SCRIPT_DIR}/deploy-ingress-nginx.sh"
 
-wait_for_ingress_lb
+if [[ "${SKIP_INGRESS}" != "true" ]]; then
+  if should_run_step "ingress"; then
+    wait_for_ingress_lb
+  elif [[ -z "${START_FROM}" ]]; then
+    wait_for_ingress_lb
+  fi
+fi
 
-log "Deploying cert-manager..."
-"${SCRIPT_DIR}/deploy-cert-manager.sh"
+run_step "cert-manager" "Deploying cert-manager..." "${SKIP_CERT_MANAGER}" \
+  "${SCRIPT_DIR}/deploy-cert-manager.sh"
 
-log "Deploying sample application..."
-"${SCRIPT_DIR}/deploy-app.sh"
+run_step "app" "Deploying sample application..." "${SKIP_APP}" \
+  "${SCRIPT_DIR}/deploy-app.sh"
 
-log "Updating Route53 record for application..."
-"${SCRIPT_DIR}/update-route53.sh" "${APP_HOSTNAME}"
+run_step "route53-app" "Updating Route53 record for application..." "${SKIP_ROUTE53_APP}" \
+  "${SCRIPT_DIR}/update-route53.sh" "${APP_HOSTNAME}"
 
-log "Creating/updating Grafana admin secret..."
-"${SCRIPT_DIR}/create-grafana-secret.sh"
+run_step "grafana-secret" "Creating/updating Grafana admin secret..." "${SKIP_GRAFANA_SECRET}" \
+  "${SCRIPT_DIR}/create-grafana-secret.sh"
 
-log "Installing observability stack..."
-"${SCRIPT_DIR}/install-observability.sh"
+run_step "observability" "Installing observability stack..." "${SKIP_OBSERVABILITY}" \
+  "${SCRIPT_DIR}/install-observability.sh"
 
-log "Updating Route53 record for Grafana..."
-"${SCRIPT_DIR}/update-route53.sh" "${GRAFANA_HOSTNAME}"
+run_step "route53-grafana" "Updating Route53 record for Grafana..." "${SKIP_ROUTE53_GRAFANA}" \
+  "${SCRIPT_DIR}/update-route53.sh" "${GRAFANA_HOSTNAME}"
 
 log "Bootstrap completed successfully."
 

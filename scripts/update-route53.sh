@@ -43,16 +43,36 @@ fi
 echo "Hosted Zone ID: ${HOSTED_ZONE_ID}"
 
 echo "Fetching Load Balancer Hosted Zone ID..."
+
+LB_ZONE_ID=""
+LB_TYPE=""
+
+# Try ELBv2 first (ALB/NLB)
 LB_ZONE_ID=$(aws elbv2 describe-load-balancers \
   --region "${AWS_REGION}" \
-  --query "LoadBalancers[?DNSName=='${LB_HOSTNAME}'].CanonicalHostedZoneId" \
-  --output text)
+  --query "LoadBalancers[?DNSName=='${LB_HOSTNAME}'].CanonicalHostedZoneId | [0]" \
+  --output text 2>/dev/null || true)
+
+if [[ -n "${LB_ZONE_ID}" && "${LB_ZONE_ID}" != "None" ]]; then
+  LB_TYPE="elbv2"
+else
+  # Fallback to Classic ELB
+  LB_ZONE_ID=$(aws elb describe-load-balancers \
+    --region "${AWS_REGION}" \
+    --query "LoadBalancerDescriptions[?DNSName=='${LB_HOSTNAME}'].CanonicalHostedZoneNameID | [0]" \
+    --output text 2>/dev/null || true)
+
+  if [[ -n "${LB_ZONE_ID}" && "${LB_ZONE_ID}" != "None" ]]; then
+    LB_TYPE="elb"
+  fi
+fi
 
 if [[ -z "${LB_ZONE_ID}" || "${LB_ZONE_ID}" == "None" ]]; then
   echo "ERROR: Could not retrieve load balancer hosted zone ID"
   exit 1
 fi
 
+echo "Load Balancer type: ${LB_TYPE}"
 echo "Load Balancer Zone ID: ${LB_ZONE_ID}"
 
 echo "Updating Route53 record: ${RECORD_NAME}"
@@ -78,8 +98,8 @@ cat > /tmp/route53-change.json <<EOF
 EOF
 
 aws route53 change-resource-record-sets \
-  --region "${AWS_REGION}" \
   --hosted-zone-id "${HOSTED_ZONE_ID}" \
-  --change-batch file:///tmp/route53-change.json
+  --change-batch file:///tmp/route53-change.json \
+  --region "${AWS_REGION}"
 
 echo "Route53 record updated successfully for ${RECORD_NAME}."
