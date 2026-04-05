@@ -299,6 +299,18 @@ The ingress-nginx Helm deployment enables:
 
 This allows the observability stack to scrape ingress metrics automatically and visualize them in Grafana.
 
+## Prometheus scraping for ingress-nginx
+
+When using Prometheus Operator, the `ServiceMonitor` created by `ingress-nginx` must match the label selector configured in the Prometheus resource.
+
+In this project, Prometheus selects `ServiceMonitor` resources with:
+
+    release: kube-prometheus-stack
+
+For that reason, the ingress-nginx Helm values add the same label to the generated `ServiceMonitor`.
+
+Without this label, the metrics endpoint exists but Prometheus does not scrape it.
+
 ## Decisions (WIP)
 (To be expanded)
 
