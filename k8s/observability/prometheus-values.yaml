@@ -1,11 +1,21 @@
 grafana:
-  adminUser: admin
-  adminPassword: CHANGE_ME_GRAFANA_ADMIN_PASSWORD # PLACEHOLDER
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+
   service:
     type: ClusterIP
+
   persistence:
     enabled: false
+
   defaultDashboardsEnabled: true
+
+  grafana.ini:
+    server:
+      domain: grafana.andresantos.click
+      root_url: https://grafana.andresantos.click/
 
 alertmanager:
   enabled: true

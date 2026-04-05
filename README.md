@@ -330,6 +330,27 @@ After setting up Prometheus and Grafana, load tests were executed using k6 to va
 
 This confirms that the observability stack is working end-to-end.
 
+## Grafana access through Ingress
+
+Grafana is exposed through NGINX Ingress using the public hostname:
+
+    https://grafana.andresantos.click
+
+Because Grafana runs behind a reverse proxy with TLS termination at the ingress layer, the public server URL is explicitly configured.
+
+### Why this matters
+
+Without a correct `root_url`, Grafana may generate incorrect paths for static frontend assets, which can cause the UI to fail with the message:
+
+    Grafana has failed to load its application files
+
+### Configuration
+
+The Grafana settings include:
+
+    grafana.ini.server.domain = grafana.andresantos.click
+    grafana.ini.server.root_url = https://grafana.andresantos.click/
+
 ## Decisions (WIP)
 (To be expanded)
 
