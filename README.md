@@ -22,15 +22,12 @@ This project implements a highly available web service on Kubernetes using AWS E
 - Prometheus & Grafana
 - k6 (stress testing)
 
-## Project Structure
-(you can paste your folder structure here)
-
 ## Current Status
 - [x] Bootstrap (S3 backend)
-- [ ] Network
-- [ ] EKS
-- [ ] Platform
-- [ ] Observability
+- [x] Network
+- [x] EKS
+- [x] Platform
+- [x] Observability
 - [ ] Stress test
 
 ## Incremental Terraform Validation
@@ -91,18 +88,37 @@ The following tools are required to interact with the Kubernetes cluster:
 
 Helm is used to install and manage Kubernetes packages such as the NGINX Ingress Controller and monitoring stack.
 
-## Ingress Controller Deployment
+## Environment bootstrap
 
-The NGINX Ingress Controller is deployed using Helm through an automation script instead of manual ad-hoc commands.
+To make environment recreation more reproducible, the project includes a bootstrap script that orchestrates the deployment of the main Kubernetes add-ons and services in the correct order.
 
-This approach improves repeatability and makes the lab environment easier to destroy and recreate, which is especially useful for cost control and for demonstrating the setup during the recorded walkthrough.
+### What it does
 
-The deployment uses:
+The bootstrap script runs the following steps:
 
-- Helm repository configuration
-- namespace creation if needed
-- `helm upgrade --install` for idempotent installation
-- a `LoadBalancer` service to expose the ingress controller externally
+1. Deploy `ingress-nginx`
+2. Wait for the LoadBalancer hostname
+3. Deploy `cert-manager`
+4. Deploy the sample application
+5. Update the Route53 record for the application
+6. Create or update the Grafana admin credentials secret
+7. Install the observability stack
+8. Update the Route53 record for Grafana
+
+### Usage
+
+Interactive mode:
+
+    ./scripts/bootstrap-eks-addons.sh
+
+Non-interactive mode for Grafana credentials:
+
+    export GRAFANA_ADMIN_PASSWORD="your-password"
+    ./scripts/bootstrap-eks-addons.sh
+
+### Why this approach
+
+This orchestration layer improves reproducibility, reduces manual errors during environment recreation, and makes the overall setup easier to demonstrate and document.
 
 ## Automated Cluster Context Refresh
 
@@ -165,7 +181,67 @@ This ensures that:
 - the application hostname always points to the correct endpoint
 - TLS validation with Let's Encrypt continues to work without manual intervention
 - the environment can be recreated quickly and consistently
+
+### Examples
+```bash
+./scripts/update-route53-record.sh whoami.andresantos.click
+./scripts/update-route53-record.sh grafana.andresantos.click
+```
+
+This avoids duplicating DNS automation logic for each service exposed through Ingress.
   
+## Observability
+
+This project uses `kube-prometheus-stack` to provide cluster and workload observability on EKS.
+
+### Components
+- Prometheus
+- Grafana
+- Alertmanager
+- kube-state-metrics
+- node-exporter
+
+### Grafana credentials
+
+Grafana admin credentials are managed through a Kubernetes Secret.
+
+The setup supports both interactive and non-interactive modes:
+
+#### Interactive (recommended for local setup)
+
+Run the script and provide the password when prompted:
+
+    ./scripts/create-grafana-secret.sh
+
+#### Non-interactive (CI/CD)
+
+Set the password as an environment variable before running the script:
+
+    export GRAFANA_ADMIN_PASSWORD="your-password"
+    ./scripts/create-grafana-secret.sh
+
+This approach avoids storing credentials in plaintext while keeping the setup simple and reproducible.
+
+### Why this approach
+The goal was to keep the observability stack reproducible and simple, while still following real SRE practices.  
+Using `kube-prometheus-stack` reduced setup complexity and provided a solid baseline for:
+- Kubernetes cluster health monitoring
+- Pod and node resource usage
+- Alerting capabilities
+- Dashboard-based analysis during stress tests
+
+### Access
+Grafana is exposed through the existing NGINX Ingress and protected with TLS via cert-manager.
+
+### Scope
+At this stage, the focus is on:
+- cluster metrics
+- pod/container metrics
+- ingress-level metrics
+- support for stress test analysis
+
+More advanced features such as centralized logs and distributed tracing were intentionally left out to avoid overengineering.
+
 ## Decisions (WIP)
 (To be expanded)
 

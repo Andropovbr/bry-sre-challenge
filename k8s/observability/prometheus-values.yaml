@@ -1,0 +1,22 @@
+grafana:
+  adminUser: admin
+  adminPassword: CHANGE_ME_GRAFANA_ADMIN_PASSWORD # PLACEHOLDER
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: false
+  defaultDashboardsEnabled: true
+
+alertmanager:
+  enabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    storageSpec: null
+
+kube-state-metrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
