@@ -130,6 +130,20 @@ This step confirmed that the following components were working together correctl
 - Kubernetes Services and Ingress resources
 - external traffic routing into the cluster
 
+## TLS Automation with cert-manager
+
+TLS was automated using cert-manager and Let's Encrypt.
+
+The solution uses an ACME `ClusterIssuer` with the HTTP-01 challenge type and the NGINX Ingress Controller as the ingress class responsible for serving the challenge response.
+
+After the DNS record was pointed to the ingress load balancer, the application ingress was updated with:
+
+- a dedicated hostname
+- a TLS section
+- a cert-manager issuer annotation
+
+This allowed cert-manager to request, validate, and provision the TLS certificate automatically, enabling secure HTTPS access to the application.
+
 ## Decisions (WIP)
 (To be expanded)
 
