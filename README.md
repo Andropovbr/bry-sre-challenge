@@ -69,15 +69,24 @@ Implemented resources include:
 
 The cluster was configured to use private subnets for the worker nodes and both private and restricted public API access for cluster administration. This provides a balance between operational simplicity and improved security for the challenge environment.
 
-## Ingress Controller
+## NGINX Ingress Controller
 
-An NGINX Ingress Controller was deployed to the cluster using Helm.
+The NGINX Ingress Controller is deployed via Helm and configured through a dedicated values file.
 
-The controller was exposed using a Kubernetes Service of type `LoadBalancer`, which automatically provisioned an AWS Network Load Balancer (NLB).
+### Current configuration
 
-This component is responsible for routing external HTTP/HTTPS traffic into the cluster and will be used to expose the application in the next steps.
+The deployment keeps the controller exposed through an external AWS load balancer:
 
-The decision to use NGINX Ingress aligns with the challenge requirements and provides a flexible and widely adopted solution for managing traffic routing in Kubernetes environments.
+    controller.service.type=LoadBalancer
+
+To support observability, Prometheus metrics are enabled as well:
+
+    controller.metrics.enabled=true
+    controller.metrics.serviceMonitor.enabled=true
+
+### Why this approach
+
+Using a Helm values file instead of inline flags keeps the setup easier to maintain, document, and extend as the project evolves.
 
 ### Tooling
 

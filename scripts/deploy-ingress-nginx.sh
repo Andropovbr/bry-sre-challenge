@@ -8,6 +8,7 @@ NAMESPACE="ingress-nginx"
 RELEASE_NAME="ingress-nginx"
 REPO_NAME="ingress-nginx"
 REPO_URL="https://kubernetes.github.io/ingress-nginx"
+VALUES_FILE="k8s/ingress-nginx/values.yaml"
 
 echo "Checking EKS cluster status..."
 CLUSTER_STATUS="$(aws eks describe-cluster \
@@ -29,6 +30,11 @@ aws eks update-kubeconfig \
 echo "Validating cluster connectivity..."
 kubectl cluster-info >/dev/null
 
+if [[ ! -f "${VALUES_FILE}" ]]; then
+  echo "ERROR: Values file not found: ${VALUES_FILE}"
+  exit 1
+fi
+
 echo "Adding Helm repository..."
 helm repo add "${REPO_NAME}" "${REPO_URL}" >/dev/null 2>&1 || true
 
@@ -41,9 +47,9 @@ kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace
 echo "Deploying NGINX Ingress Controller..."
 helm upgrade --install "${RELEASE_NAME}" "${REPO_NAME}/ingress-nginx" \
   --namespace "${NAMESPACE}" \
-  --set controller.service.type=LoadBalancer
+  -f "${VALUES_FILE}"
 
-echo "Waiting for ingress-nginx pods..."
+echo "Waiting for ingress-nginx controller deployment..."
 kubectl rollout status deployment/ingress-nginx-controller -n "${NAMESPACE}" --timeout=300s
 
 echo "Ingress NGINX deployment completed successfully."
