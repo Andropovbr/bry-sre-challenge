@@ -4,11 +4,16 @@ metadata:
   name: whoami
   namespace: app
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - whoami.andresantos.click
+      secretName: whoami-tls
   rules:
-    - http:
+    - host: whoami.andresantos.click
+      http:
         paths:
           - path: /
             pathType: Prefix

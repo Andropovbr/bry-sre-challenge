@@ -134,15 +134,25 @@ This step confirmed that the following components were working together correctl
 
 TLS was automated using cert-manager and Let's Encrypt.
 
-The solution uses an ACME `ClusterIssuer` with the HTTP-01 challenge type and the NGINX Ingress Controller as the ingress class responsible for serving the challenge response.
+The application ingress was updated to include:
 
-After the DNS record was pointed to the ingress load balancer, the application ingress was updated with:
+- a dedicated hostname (`whoami.andresantos.click`)
+- a TLS section referencing a Kubernetes secret
+- a cert-manager annotation pointing to the `letsencrypt-prod` ClusterIssuer
 
-- a dedicated hostname
-- a TLS section
-- a cert-manager issuer annotation
+With DNS correctly delegated and the application hostname pointing to the ingress load balancer, cert-manager was able to complete the ACME HTTP-01 challenge and provision a valid TLS certificate automatically.
 
-This allowed cert-manager to request, validate, and provision the TLS certificate automatically, enabling secure HTTPS access to the application.
+## ACME Validation Result
+
+After DNS delegation was corrected and the application hostname resolved publicly, cert-manager successfully completed the ACME HTTP-01 validation flow and issued the TLS certificate for `whoami.andresantos.click`.
+
+At that point, the most important success indicators were:
+
+- the `Certificate` resource in `READY=True` state
+- the creation of the `whoami-tls` secret
+- successful HTTPS access to the application endpoint
+
+`Order` and `Challenge` resources are mainly relevant during the issuance and troubleshooting phases, so their absence after successful issuance is not a problem.
 
 ## Decisions (WIP)
 (To be expanded)
