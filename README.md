@@ -117,6 +117,19 @@ The script performs the following steps before installing the ingress controller
 - validates Kubernetes API connectivity
 - installs or upgrades the ingress controller with Helm
 
+## Sample Application Deployment
+
+A simple web application was deployed to the cluster to validate external traffic routing through the ingress layer.
+
+The application was exposed through a Kubernetes `Service` and an `Ingress` resource managed by the NGINX Ingress Controller. Once deployed, it was successfully reached from outside the cluster through the AWS load balancer endpoint.
+
+This step confirmed that the following components were working together correctly:
+
+- the EKS cluster
+- the NGINX Ingress Controller
+- Kubernetes Services and Ingress resources
+- external traffic routing into the cluster
+
 ## Decisions (WIP)
 (To be expanded)
 
