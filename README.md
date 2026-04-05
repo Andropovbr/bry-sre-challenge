@@ -154,6 +154,18 @@ At that point, the most important success indicators were:
 
 `Order` and `Challenge` resources are mainly relevant during the issuance and troubleshooting phases, so their absence after successful issuance is not a problem.
 
+## Automated DNS Updates
+
+Because the lab environment is frequently destroyed and recreated, the load balancer hostname changes between runs.
+
+To avoid manual DNS updates, a script was implemented using the AWS CLI to automatically update the Route 53 record with the current ingress load balancer.
+
+This ensures that:
+
+- the application hostname always points to the correct endpoint
+- TLS validation with Let's Encrypt continues to work without manual intervention
+- the environment can be recreated quickly and consistently
+  
 ## Decisions (WIP)
 (To be expanded)
 
