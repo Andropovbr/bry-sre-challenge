@@ -351,6 +351,67 @@ The Grafana settings include:
     grafana.ini.server.domain = grafana.andresantos.click
     grafana.ini.server.root_url = https://grafana.andresantos.click/
 
+## Load testing results and observability validation
+
+A load test was executed using k6 to validate the observability stack and system behavior under load.
+
+### Test characteristics
+
+- target: whoami service
+- ingress: nginx ingress controller
+- peak load: ~30 requests per second
+- duration: ~5 minutes
+
+### Observations
+
+#### Request throughput
+
+Prometheus query:
+
+    sum(rate(nginx_ingress_controller_requests{ingress="whoami",status="200"}[1m]))
+
+- peak throughput reached ~30 req/s
+- no HTTP 5xx errors observed
+
+#### Network activity
+
+Grafana dashboards showed:
+
+- clear spike in network bandwidth during the test window
+- increase in packet rates
+- return to baseline after test completion
+
+#### CPU usage
+
+- CPU usage increased slightly but remained low
+- expected behavior due to lightweight application
+
+#### Memory usage
+
+- memory increased from ~2.5MB to ~7MB during load
+- returned to baseline after load
+
+#### Stability
+
+- no pod restarts
+- no CPU throttling
+- no error spikes
+
+### Conclusion
+
+The system successfully handled the applied load without degradation, and the observability stack correctly captured metrics across ingress, application, and infrastructure layers.
+
+### SRE perspective
+
+From an SRE perspective, the system demonstrates:
+
+- correct observability coverage (metrics from ingress, application, and cluster)
+- stable behavior under moderate load
+- absence of error amplification under traffic
+- efficient resource usage (low CPU/memory footprint)
+
+This indicates a well-configured and reliable baseline system.
+
 ## Decisions (WIP)
 (To be expanded)
 
