@@ -28,7 +28,7 @@ This project implements a highly available web service on Kubernetes using AWS E
 - [x] EKS
 - [x] Platform
 - [x] Observability
-- [ ] Stress test
+- [x] Stress test
 
 ## Incremental Terraform Validation
 
@@ -401,6 +401,23 @@ Grafana dashboards showed:
 
 The system successfully handled the applied load without degradation, and the observability stack correctly captured metrics across ingress, application, and infrastructure layers.
 
+---
+
+## Evidence
+
+### Prometheus throughput
+
+![Prometheus throughput](docs/evidence/Prometheus-nginx_ingress_controller_requests.png)
+
+### Network activity spike
+
+![Network spike](docs/evidence/Networking-Namespace.png)
+
+### Resource usage
+
+![CPU](docs/evidence/Namespace-CPU.png)
+![Memory](docs/evidence/Namespace-Memory.png)
+
 ### SRE perspective
 
 From an SRE perspective, the system demonstrates:
@@ -412,8 +429,93 @@ From an SRE perspective, the system demonstrates:
 
 This indicates a well-configured and reliable baseline system.
 
-## Decisions (WIP)
-(To be expanded)
+## Architecture (High-Level)
+
+The architecture is designed following standard AWS and Kubernetes best practices for high availability and security.
+
+- A dedicated VPC with public and private subnets across two Availability Zones
+- Public subnets host the ingress load balancer
+- Private subnets host the EKS worker nodes
+- A NAT Gateway enables outbound internet access for private workloads
+- Route53 manages DNS records for application and observability endpoints
+
+Traffic flow:
+
+User → Route53 → AWS Load Balancer → NGINX Ingress → Kubernetes Service → Application Pods
+
+TLS is terminated at the ingress layer using cert-manager with Let's Encrypt.
+
+Observability is implemented through Prometheus and Grafana, collecting metrics from:
+- Kubernetes components
+- application workloads
+- ingress controller
+
+## Decisions
+
+### Use of Classic Load Balancer (CLB)
+
+The ingress-nginx controller was exposed using a Service of type LoadBalancer without the AWS Load Balancer Controller.
+
+This results in AWS provisioning a Classic Load Balancer by default.
+
+**Trade-off:**
+- simpler setup
+- faster implementation
+- less control compared to ALB/NLB
+
+**Alternative:**
+- AWS Load Balancer Controller for ALB integration
+
+---
+
+### Use of kube-prometheus-stack
+
+Instead of building observability from scratch, kube-prometheus-stack was used.
+
+**Benefits:**
+- faster setup
+- production-grade defaults
+- built-in dashboards and alerting
+
+**Trade-off:**
+- less customization initially
+
+---
+
+### Use of a lightweight test application (whoami)
+
+A minimal application was chosen to focus on infrastructure and observability rather than application complexity.
+
+**Trade-off:**
+- low resource usage (does not stress CPU significantly)
+- good for validating traffic flow and metrics
+
+---
+
+### Use of scripting instead of full CI/CD
+
+Scripts were used to automate:
+- ingress deployment
+- cert-manager setup
+- DNS updates
+- observability stack
+
+**Trade-off:**
+- faster to implement
+- easier to debug locally
+
+**Future improvement:**
+- GitHub Actions pipeline for full automation
+
+---
 
 ## Next Steps
-(To be expanded)
+
+Potential improvements for a production-grade setup:
+
+- replace Classic Load Balancer with AWS Load Balancer Controller (ALB/NLB)
+- implement CI/CD pipelines for infrastructure and application deployment
+- add centralized logging (e.g., Loki or ELK stack)
+- implement distributed tracing (e.g., OpenTelemetry)
+- define SLOs and alerts based on service-level indicators
+- improve cleanup automation to avoid orphaned AWS resources
