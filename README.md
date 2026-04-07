@@ -509,13 +509,101 @@ Scripts were used to automate:
 
 ---
 
-## Next Steps
+## Production considerations
 
-Potential improvements for a production-grade setup:
+Although this project was designed for a reproducible lab environment, several improvements would be required for a production-ready setup.
 
-- replace Classic Load Balancer with AWS Load Balancer Controller (ALB/NLB)
-- implement CI/CD pipelines for infrastructure and application deployment
-- add centralized logging (e.g., Loki or ELK stack)
-- implement distributed tracing (e.g., OpenTelemetry)
-- define SLOs and alerts based on service-level indicators
-- improve cleanup automation to avoid orphaned AWS resources
+### CI/CD pipelines
+
+The current deployment relies on scripts for simplicity and speed. In production, this would be replaced by CI/CD pipelines:
+
+- **Infrastructure pipeline (Terraform):**
+  - automatic `plan` on pull requests
+  - manual approval for `apply`
+  - remote state locking and versioning
+
+- **Application pipeline:**
+  - build and push container images
+  - automated deployment to Kubernetes
+  - versioned releases
+
+This approach improves traceability, consistency, and reduces manual errors.
+
+---
+
+### Environment separation
+
+The current setup uses a single environment. A production architecture would include:
+
+- separate environments (e.g. dev, staging, production)
+- isolated Terraform states
+- possibly separate clusters or namespaces per environment
+
+This allows safer testing and controlled promotion of changes.
+
+---
+
+### Load balancing and ingress
+
+The ingress is currently exposed using the default Kubernetes behavior, which provisions a Classic Load Balancer.
+
+For production, I would use:
+
+- AWS Load Balancer Controller
+- Application Load Balancer (ALB)
+
+This enables better integration with AWS, advanced routing, and improved scalability.
+
+---
+
+### Observability improvements
+
+The project includes metrics with Prometheus and Grafana. A production setup would extend this with:
+
+- centralized logging (e.g. Loki or ELK stack)
+- distributed tracing (e.g. OpenTelemetry)
+- alerting based on SLOs and SLIs
+
+This provides full visibility across the system.
+
+---
+
+### Security considerations
+
+Production improvements would include:
+
+- fine-grained IAM roles (IRSA)
+- secrets management using AWS Secrets Manager
+- Kubernetes NetworkPolicies for traffic control
+
+---
+
+### Cost and availability trade-offs
+
+To optimize cost in this lab environment, a single NAT Gateway was used.
+
+In production, I would evaluate:
+
+- multi-AZ NAT Gateway setup
+- redundancy for critical components
+
+Balancing cost and availability depending on business requirements.
+
+---
+
+### Cleanup and lifecycle management
+
+During testing, it was observed that AWS Load Balancers created by Kubernetes can delay infrastructure teardown.
+
+In a production workflow, I would:
+
+- enforce cleanup automation
+- ensure proper resource ownership
+- implement safeguards in destroy pipelines
+
+---
+
+### Summary
+
+This project demonstrates a functional and observable baseline.  
+With the improvements described above, it can evolve into a production-ready platform with stronger guarantees around reliability, security, and operational excellence.

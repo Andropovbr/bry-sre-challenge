@@ -16,6 +16,7 @@ SKIP_ROUTE53_APP="${SKIP_ROUTE53_APP:-false}"
 SKIP_GRAFANA_SECRET="${SKIP_GRAFANA_SECRET:-false}"
 SKIP_OBSERVABILITY="${SKIP_OBSERVABILITY:-false}"
 SKIP_ROUTE53_GRAFANA="${SKIP_ROUTE53_GRAFANA:-false}"
+SKIP_INGRESS_SERVICEMONITOR="${SKIP_INGRESS_SERVICEMONITOR:-false}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STARTED="false"
@@ -132,6 +133,9 @@ run_step "grafana-secret" "Creating/updating Grafana admin secret..." "${SKIP_GR
 
 run_step "observability" "Installing observability stack..." "${SKIP_OBSERVABILITY}" \
   "${SCRIPT_DIR}/install-observability.sh"
+
+run_step "ingress-servicemonitor" "Enabling ingress-nginx ServiceMonitor..." "${SKIP_INGRESS_SERVICEMONITOR:-false}" \
+  "${SCRIPT_DIR}/enable-ingress-metrics-servicemonitor.sh"
 
 run_step "route53-grafana" "Updating Route53 record for Grafana..." "${SKIP_ROUTE53_GRAFANA}" \
   "${SCRIPT_DIR}/update-route53.sh" "${GRAFANA_HOSTNAME}"
